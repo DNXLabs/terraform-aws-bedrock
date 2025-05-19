@@ -15,7 +15,20 @@ provider "aws" {
 module "bedrock" {
   source = "../"
 
-  budget_email = "adenot@dnx.solutions"
+  budget_email = "contact@dnx.solutions"
+  budget       = 500
+
+  guardrails = [
+    {
+      name            = "guardrail-01"
+      description     = "Guardrail 01"
+      filter_strength = "MEDIUM"
+      filters         = ["SEXUAL", "VIOLENCE", "HATE", "INSULTS", "MISCONDUCT", "PROMPT_ATTACK"]
+      tags = {
+        "Unit" = "Cloud Operations Centre"
+      }
+    }
+  ]
 
   profiles = [
     # Profiles are useful for billing and usage tracking
@@ -34,10 +47,10 @@ module "bedrock" {
       tags = {
         "Unit" = "Cloud Operations Centre"
       }
-      budget = 1000
     }
   ]
 
+  # NOT YET SUPPORTED BY TERRAFORM
   # routers = [
   #   {
   #     name               = "claude-3-5"
@@ -50,6 +63,14 @@ module "bedrock" {
 
 output "profile_arns" {
   value = module.bedrock.profile_arns
+}
+
+output "guardrail_arns" {
+  value = module.bedrock.guardrail_arns
+}
+
+output "guardrail_versions" {
+  value = module.bedrock.guardrail_versions
 }
 
 ## USE:

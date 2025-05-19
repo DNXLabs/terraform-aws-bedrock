@@ -6,7 +6,6 @@ variable "profiles" {
     source_foundation_model_name = optional(string)
     source_inference_model_name  = optional(string)
     tags                         = optional(map(string))
-    budget                       = optional(number)
   }))
   default = []
 }
@@ -15,6 +14,24 @@ variable "budget_email" {
   description = "Email address to send budget alerts to, leave empty to disable budget alerts"
   type        = string
   default     = ""
+}
+
+variable "budget" {
+  description = "Budget amount in USD (0 to disable)"
+  type        = number
+  default     = 0
+}
+
+variable "guardrails" {
+  description = "Enable guardrails"
+  type = list(object({
+    name            = string
+    description     = string
+    filters         = optional(list(string)) # default: ["SEXUAL", "VIOLENCE", "HATE", "INSULTS", "MISCONDUCT", "PROMPT_ATTACK"]
+    filter_strength = optional(string)       # default: "HIGH"
+    tags            = optional(map(string))
+  }))
+  default = []
 }
 
 # variable "routers" {
