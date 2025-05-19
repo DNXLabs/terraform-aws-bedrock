@@ -9,100 +9,123 @@ AWS Bedrock is a fully managed generative AI service that simplifies building an
 
 ## Key Features
 
-### Multi-Model Architecture
-- Access to cutting-edge models like Amazon Titan, Anthropic's Claude, and AI21 Labs' Jurassic-2
-- Enables comparative model testing without vendor lock-in
-- Supports specialized model selection for specific tasks
+- Budget Management for AI Resource Consumption
+- Configurable Guardrails for Content Safety
+- Multiple Inference Profiles for Different AI Models
+- Flexible Tagging for Resource Management
 
-### Agents for Complex Workflow Automation
-- Connect to internal APIs and Lambda functions
-- Auto-generate API call sequences for user requests
-- Maintain session context for conversational interactions
+## Usage Example
 
-### Advanced Data Processing
-- Multimodal data processing (PDFs, images, audio/video)
-- Automated data extraction with customizable output templates
-- Confidence scoring to reduce hallucinations
+```hcl
+module "bedrock" {
+  source = "DNXLabs/bedrock/aws"
 
-### Enterprise-Grade Security
-- AWS IAM integration for granular access control
-- Private model customization with dedicated compute
-- Data encryption at rest and in transit
-- Compliance with HIPAA, GDPR, and SOC standards
+  # Budget Configuration
+  budget_email = "contact@example.com"
+  budget       = 500  # Monthly budget in USD
+
+  # Guardrails Configuration
+  guardrails = [
+    {
+      name            = "content-safety-guardrail"
+      description     = "Prevent inappropriate content"
+      filter_strength = "MEDIUM"
+      filters         = ["SEXUAL", "VIOLENCE", "HATE", "INSULTS", "MISCONDUCT", "PROMPT_ATTACK"]
+      tags = {
+        "Unit" = "Cloud Operations Centre"
+      }
+    }
+  ]
+
+  # Inference Profiles for Different Models
+  profiles = [
+    {
+      name                        = "claude-3-5-sonnet-profile"
+      description                 = "Claude 3.5 Sonnet Inference Profile"
+      source_inference_model_name = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+      tags = {
+        "Unit" = "Cloud Operations Centre"
+      }
+    },
+    {
+      name                        = "claude-3-7-sonnet-profile"
+      description                 = "Claude 3.7 Sonnet Inference Profile"
+      source_inference_model_name = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+      tags = {
+        "Unit" = "Cloud Operations Centre"
+      }
+    }
+  ]
+}
+
+# Outputs
+output "profile_arns" {
+  description = "ARNs of created Bedrock inference profiles"
+  value       = module.bedrock.profile_arns
+}
+
+output "guardrail_arns" {
+  description = "ARNs of created Bedrock guardrails"
+  value       = module.bedrock.guardrail_arns
+}
+
+output "guardrail_versions" {
+  description = "Versions of created Bedrock guardrails"
+  value       = module.bedrock.guardrail_versions
+}
+```
+
+<!--- BEGIN_TF_DOCS --->
 
 ## Requirements
 
 | Name | Version |
 |------|---------|
 | Terraform | >= 0.13.0 |
-| AWS Provider | Latest Recommended Version |
-
-## Usage Example
-
-```hcl
-module "aws_bedrock" {
-  source = "DNXLabs/bedrock/aws"
-  
-  # Configure your Bedrock resources here
-  # Example configurations will be added as the module develops
-}
-```
-
-## Terraform Integration Strategies
-
-### IAM Configuration
-```hcl
-resource "aws_iam_role" "bedrock_execution" {
-  name = "bedrock-exec-role"
-  
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "bedrock.amazonaws.com"
-      }
-    }]
-  })
-}
-```
-
-### Supporting Infrastructure
-```hcl
-# S3 Bucket for model training data
-resource "aws_s3_bucket" "model_data" {
-  bucket = "bedrock-training-data-${var.env}"
-}
-
-# Lambda function for custom model hooks
-resource "aws_lambda_function" "model_validation" {
-  filename      = "lambda.zip"
-  function_name = "bedrock-model-validator"
-  role          = aws_iam_role.lambda_exec.arn
-  handler       = "index.handler"
-  runtime       = "python3.9"
-}
-```
-
-## Best Practices
-1. Use the latest version of the module
-2. Implement proper IAM roles and permissions
-3. Configure comprehensive logging and monitoring
-4. Manage model versions across environments
-5. Optimize costs with intelligent scaling policies
+| AWS Provider | 6.0.0-beta1 |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| (Inputs to be dynamically populated) | | | | |
+| `budget_email` | Email address to send budget alerts | `string` | n/a | yes |
+| `budget` | Monthly budget for AI resources in USD | `number` | n/a | yes |
+| `guardrails` | List of guardrail configurations | `list(object({...}))` | `[]` | no |
+| `profiles` | List of inference profile configurations | `list(object({...}))` | `[]` | no |
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| (Outputs to be dynamically populated) | |
+| Name | Description | Type |
+|------|-------------|------|
+| `profile_arns` | List of created Bedrock inference profile ARNs | `list(string)` |
+| `guardrail_arns` | List of created Bedrock guardrail ARNs | `list(string)` |
+| `guardrail_versions` | Versions of created Bedrock guardrails | `list(string)` |
+
+<!--- END_TF_DOCS --->
+
+### Guardrails Configuration
+| Field | Description | Type | 
+|-------|-------------|------|
+| `name` | Name of the guardrail | `string` |
+| `description` | Description of the guardrail | `string` |
+| `filter_strength` | Strength of content filtering (e.g., LOW, MEDIUM, HIGH) | `string` |
+| `filters` | Types of content to filter | `list(string)` |
+| `tags` | Optional tags for the guardrail | `map(string)` |
+
+### Profiles Configuration
+| Field | Description | Type | 
+|-------|-------------|------|
+| `name` | Name of the inference profile | `string` |
+| `description` | Description of the profile | `string` |
+| `source_inference_model_name` | ARN or name of the source model | `string` |
+| `tags` | Optional tags for the profile | `map(string)` |
+
+## Best Practices
+1. Use comprehensive guardrails to ensure content safety
+2. Configure multiple inference profiles for flexibility
+3. Set appropriate budget alerts
+4. Use tags for better resource management and tracking
+5. Regularly review and update model configurations
 
 ## Contributing
 
